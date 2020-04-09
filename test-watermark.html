@@ -1,0 +1,211 @@
+<html>
+  <head>
+    <title>Watermark Tool</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <link rel="stylesheet" type="text/css" href="css/vendor/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/vendor/croppr.min.css">
+</head>
+<body>
+<div id="vapp-container">
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-3 col-md-3">
+				<button v-on:click.prevent="curVisiblePanel='image'" type="button" id="imagepanelBtn" v-bind:class="{ 'btn-secondary': (curVisiblePanel == 'image'), 'btn-primary': (curVisiblePanel != 'image') }" class="btn btn-block"><i class="far fa-image"></i>&nbsp;<span class="d-none d-sm-inline-block">Image</span></button>
+			</div>
+			<div class="col-3 col-md-3">
+				<button v-on:click.prevent="curVisiblePanel='watermark'" type="button" id="watermarkBtn" v-bind:class="{ 'btn-secondary': (curVisiblePanel == 'watermark'), 'btn-primary': (curVisiblePanel != 'watermark') }" class="btn btn-block"><i class="fas fa-stamp"></i>&nbsp;<span class="d-none d-sm-inline-block">Watermark</span></button>
+			</div>
+			<div class="col-3 col-md-3">
+				<button  v-on:click.prevent="curVisiblePanel='text'" type="button" id="textBtn" v-bind:class="{ 'btn-secondary': (curVisiblePanel == 'text'), 'btn-primary': (curVisiblePanel != 'text') }" class="btn btn-block"><i class="fas fa-font"></i>&nbsp;<span class="d-none d-sm-inline-block">Text</span></button>
+			</div>
+			<div class="col-3 col-md-3">
+				<button type="button" class="btn btn-primary btn-block">Watermark</button>
+			</div>
+		</div>
+	</div>
+
+	<div class="container-fluid mt-3">
+		<div class="row">
+			<div class="col-12 col-xs-12 col-sm-12 col-md-6 col-lg-6">
+				<div class="card">
+					<div class="card-body p-0">
+						<canvas v-on:mousedown="handleMouseDown" ref="imgcanv" id="imgcanvas"></canvas>
+						<button v-on:click.prevent="updateResult" id="updateBtn" class="btn btn-success btn-block">Update</button>
+					</div>
+				</div>
+			</div>
+			<div class="col-12 col-xs-12 col-sm-12 col-md-6 col-lg-6">
+				<div v-show="curVisiblePanel == 'image'" id="imageselectpanel">
+					<div class="row">
+						<div class="col">
+							<label for="imageinput">Image:</label>
+						<!-- 	<input class="form-control" type="file" id="imageinput"/> -->
+							<div class="custom-file">
+								<input v-on:change.prevent="handleImageInputClick" type="file" class="custom-file-input" id="imageinput">
+								<label class="custom-file-label" for="imageinput" data-browse="Browse">Browse Image</label>
+							</div>
+						</div>
+					</div>		
+					<div class="row mt-2">
+						<div class="col">
+							<div class="card">
+								<div class="card-header">
+									Image
+								</div>
+								<div class="card-body p-0 text-center">
+									<div id="srcImageContainer">
+										<img src="" style="display:none;" ref="cropSrcImg" id="cropSrcImg">
+									</div>
+								</div>
+							</div>
+							<button v-on:click.prevent="handleCropClick" id="cropBtn" class="btn btn-success btn-block"><i class="fas fa-crop"></i>&nbsp;Crop</button>
+						</div>
+					</div>			
+				</div>
+				<div  v-show="curVisiblePanel == 'watermark'" id="watermark-panel" style="display:none;">
+					<div class="row">
+						<div class="col">
+							<label for="logoinput">Logo:</label>
+							<!-- <input class="form-control" type="file" id="logoinput"/> -->
+							<div class="custom-file">
+								<input v-on:change.prevent="handleLogoFileInput" type="file" class="custom-file-input" id="logoinput">
+								<label class="custom-file-label" for="logoinput" data-browse="Browse">Browse Logo</label>
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col">
+							<label for="imagescale">Scale %:</label>
+							<input v-model="scale" v-on:change="updateResult" class="form-control" type="number" id="imagescale" min="2" max="100" value="30"/>
+						</div>          
+						<div class="col">
+							<label for="imagepos">Position:</label>
+						  	<select v-model="position" v-on:change="updateResult" class="form-control" id="imagepos">
+						  		<option value="LR">Lower Right</option>
+						  		<option value="LL">Lower Left</option>
+						  		<option value="TR">Top Right</option>
+						  		<option value="TL">Top Left</option>
+						  	</select>
+						</div>          
+						<div class="col">
+							<label for="imagealpha">Opacity:</label>
+							<input v-model="opacity" v-on:change="updateResult" type="number" class="form-control" id="imagealpha" min="2" max="100"/>
+						</div>          
+					</div>
+					<div class="row mt-2">
+						<div class="col">
+							<div class="card">
+								<div class="card-header">
+									<span>Watermark</span><a id="toggleLogoIcon" class="float-right ml-5" href="#"><i class="far fa-eye"></i></a>
+								</div>
+								<div id="logoImgContainer" class="card-body p-0">
+									<canvas ref="logocanv" id="logocanvas" ></canvas>
+								</div>
+							</div>		
+						</div>
+					</div>
+				</div>
+				<div  v-show="curVisiblePanel == 'text'" id="text-panel" style="display:none;">
+					<div class="row">
+						<div class="col-6 col-md-3">
+							<label for="fontSel">Font:</label>
+						  	<select v-model="fontIndex" v-on:change="updateResult" class="form-control" id="fontSel">
+                                  <option v-for="(font,fidx) in fonts" :value="fidx">{{ font.name }}</option>
+						  	</select>
+						</div>
+						<div class="col-6 col-md-3">
+							<label for="fontCol">Color:</label>
+							<div v-on:click.prevent="pickColor" id="fontCol" class="color-picker-button">
+							</div>
+						</div>
+						<div class="col-6 col-md-3">
+							<label for="fontSize">Size:</label>
+						  	<input v-model="fontSize" v-on:change="updateResult" type="number" class="form-control" value="60" min="10" max="500" id="fontSize">
+						</div>
+						<div class="col-6 col-md-3">
+							<label for="fontPad">Padding:</label>
+						  	<input v-model="padding" v-on:change="updateResult" type="number" value="70" min="1" class="form-control" id="fontPad"/>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-6 col-md-3">
+							<label for="fontStroke">Stroke:</label>
+						  	<input v-model="stroke" v-on:change="updateResult" type="checkbox" class="form-control" id="fontStroke"/>
+						</div>
+						<div class="col-6 col-md-3">
+							<label for="fontStrokeCol">Stroke Color:</label>
+							<div v-on:click.prevent="pickColor" ref="fontStrokeCol" id="fontStrokeCol" class="color-picker-button">
+							</div>
+						</div>
+						<div class="col-6 col-md-3">
+							<label for="fontShadow">Shadow:</label>
+						  	<input v-model="shadow" v-on:change="updateResult" type="checkbox" class="form-control" id="fontShadow"/>
+						</div>
+						<div class="col-6 col-md-3">
+							<label for="fontLineH">Line Height:</label>
+						  	<input v-model="lineHeight" v-on:change="updateResult" type="number" value="30" min="0" class="form-control" id="fontLineH"/>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col">
+							<label for="curText">Text:</label>
+						  	<textarea v-model="textToWrite" v-on:keyup="updateResult" class="form-control" id="curText" rows="5"></textarea>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div v-show="showColorPicker == true" ref="colPickContainer" id="colPickContainer" style="position:fixed; display:none; left:0px; top:0px; right:0px; bottom:0px; background-color:rgba(0,0,0,0.3); text-align:center;">
+		<div id="colorPickerDialog" class="clearfix" style="margin-top:30px; margin-left:auto; margin-right:auto; width:320px; padding:10px; border-radius:5px; background-color:#ccc; box-shadow:0px 0px 20px rgba(0,0,0,1);">
+			<div id="colorPicker"></div>
+			<button v-on:click.prevent="okColorPick" id="colPickerOk" class="btn btn-success" style="margin-top:20px;" id="okPicker">OK</button>
+			<button v-on:click.prevent="cancelColorPick" id="colPickerCancel" class="btn btn-danger" style="margin-top:20px;" id="cancelPicker">Cancel</button>
+		</div>
+	</div>
+</div><!-- vue app container --> 
+
+<script src="js/vendor/jquery-3.4.1.min.js"></script>
+<script src="js/vendor/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script src="js/vendor/iro.min.js"></script>
+<script src="https://kit.fontawesome.com/00cda0b567.js" crossorigin="anonymous"></script>
+<script src="js/vendor/croppr.min.js"></script>
+<script src="js/vendor/vue.js"></script>
+<!-- form: https://github.com/namniak/canvas-text-wrapper -->
+<script src="js/image.js"></script>
+<script src="js/watermark.js"></script>
+<script src="js/canvas-text-wrapper.js"></script>
+<script src="js/textwriter.js"></script>
+<script src="js/vue-app.js"></script>
+
+	<script>
+		window.addEventListener('keyup', (e) => {
+
+			if(e.key == "ArrowUp") {
+				curOffsetY -= 5;
+				e.preventDefault();
+			}
+			else if(e.key == "ArrowDown") {
+				curOffsetY += 5;
+				e.preventDefault();
+			}
+			else if(e.key == "ArrowLeft") {
+				curOffsetX -= 5;
+				e.preventDefault();
+			}
+			else if(e.key == "ArrowRight") {
+				curOffsetX += 5;
+				e.preventDefault();
+			}
+
+			//updateResult();
+		}, false);
+
+	</script>
+
+	</body>
+</html>
