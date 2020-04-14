@@ -62,6 +62,10 @@ class imageClass {
 
         return this.getSizes();
     }
+
+    paint() {
+        this.destctx.putImageData(this.imageData, 0, 0);
+    }
 }
 
 

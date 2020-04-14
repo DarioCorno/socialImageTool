@@ -12,6 +12,7 @@ var vApp = new Vue({
         imgctx: null,
 
         logocanv: null,
+        layercanv: null,
 
         sliderPicker: null,
         showColorPicker: false,
@@ -30,6 +31,9 @@ var vApp = new Vue({
         textToWrite: '',
 
         scale: 30,
+        layerscale: 80,
+        layerposition: 'MC',
+        layeropacity: 100,
         position: 'LR',
         opacity: 80,
         fontIndex : 2,
@@ -80,6 +84,7 @@ var vApp = new Vue({
         this.imgcanv = this.$refs.imgcanv;
         this.imgctx = this.imgcanv.getContext("2d");
         this.logocanv = this.$refs.logocanv;
+        this.layercanv = this.$refs.layercanv;
         this.colPickContainer = this.$refs.colPickContainer;
         this.sliderPicker = new iro.ColorPicker("#colorPicker", {
             width: 300,
@@ -117,6 +122,7 @@ var vApp = new Vue({
         this.watermark = new watermarkClass(this.imgcanv, this.imgctx, this.logocanv);
         this.image = new imageClass(this.$refs.cropSrcImg, this.imgctx, this.imgcanv)
         this.textWriter = new textWriterClass(this.imgcanv, this.imgctx);
+        this.layer = new layerClass(this.imgcanv, this.imgctx, this.layercanv);
 
     },
     methods: {
@@ -141,6 +147,15 @@ var vApp = new Vue({
         },
         updateResult() {
             if(this.image.imageLoaded) {
+                
+                this.image.paint();
+
+                if(this.layer.layerLoaded) {
+                    this.layer.setSourceImageData( this.image );
+                    this.layer.setScale( this.layerscale ).setPosition( this.layerposition).setAlpha( this.layeropacity );
+                    this.layer.markImage();
+                }
+
                 if(this.watermark.logoLoaded) {
                     this.watermark.setSourceImage( this.image );
                     this.watermark.setScale( this.scale ).setPosition( this.position).setAlpha( this.opacity );
@@ -187,12 +202,19 @@ var vApp = new Vue({
         handleImageInputClick(evt) {
             var myURL = window.webkitURL || window.URL;
             var url = myURL.createObjectURL(evt.target.files[0]);
-            this.image.loadFileFromURL(url);     
+            this.image.loadFileFromURL(url);    
+            this.layer.rebuild();
+            //update destination sizes for watermark and layer
         },
         handleLogoFileInput(evt) {
             var URL = window.webkitURL || window.URL;
             var url = URL.createObjectURL(evt.target.files[0]);
             this.watermark.loadLogo(url, true);
+        },
+        handleLayerInputClick(evt) {
+            var URL = window.webkitURL || window.URL;
+            var url = URL.createObjectURL(evt.target.files[0]);
+            this.layer.loadLayer(url);
         },
         handleCropClick(evt) {
             let new_values =  this.image.doCrop();

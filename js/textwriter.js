@@ -5,6 +5,9 @@ class textWriterClass {
     }
 
     writeString(text, params) {
+        if(text.length == 0)
+            return false;
+            
         this.destctx.fillStyle = getComputedStyle( fontCol ).backgroundColor;
         this.destctx.globalAlpha = 1;
 

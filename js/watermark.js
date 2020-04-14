@@ -31,7 +31,7 @@ class watermarkClass {
         this.img_height = sizes.img_height;
         this.img_ratio = sizes.img_ratio;
 
-        this.imageData = image.getImageData();
+        //this.imageData = image.getImageData();
 
         return this;
     }
@@ -95,8 +95,8 @@ class watermarkClass {
             x = 0;
             y = 0;
         }
-        this.destctx.globalAlpha = 1;
-        this.destctx.putImageData(this.imageData, 0, 0);
+        //this.destctx.globalAlpha = 1;
+        //this.destctx.putImageData(this.imageData, 0, 0);
         this.destctx.globalAlpha = this.alpha;
         this.destctx.drawImage(this.logocanv, x, y, w, h);    
     }
